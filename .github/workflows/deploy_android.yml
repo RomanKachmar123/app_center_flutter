@@ -1,0 +1,49 @@
+name: Deploy Android App on AppCenter
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - develop
+
+env:
+  PROPERTIES_PATH: "./android/key.properties"
+jobs:
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    environment: uat
+    steps:
+      - run: echo "Triggered branch '${{ github.ref_name }}' was pushed by '${{ github.event.pusher.name }}'"
+        #1 Checkout repository
+        name: Check out repository code
+      - uses: actions/checkout@v4
+
+        #2 setup Flutter
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.16.9'
+          channel: stable
+          architecture: x64
+        #3 Creating the key.properties file
+      - run: |
+          echo keyPassword=\${{ secrets.KEY_STORE }} > ${{env.PROPERTIES_PATH}}
+          echo storePassword=\${{ secrets.KEY_PASSWORD }} >> ${{env.PROPERTIES_PATH}}
+          echo keyAlias=\${{ secrets.KEY_ALIAS }} >> ${{env.PROPERTIES_PATH}}
+          echo storeFile=\key.jks >> ${{env.PROPERTIES_PATH}}
+        #4 Decoding base64 key into a file
+      - run: echo "${{ secrets.KEYSTORE2 }}" | base64 --decode > android/app/key.jks
+
+        #5 install dependencies
+      - name: Run flutter pub get
+        run: flutter pub get
+
+        #7 build apk
+      - name: Build APK
+        run: flutter build apk --release
+
+        #8 Setup AppCenter CLI
+      - name: Install appcenter-cli
+        uses: charliealbright/appcenter-cli-action@v1.0.2
+        with:
+          token: '${{secrets.APPCENTER_API_TOKEN}}'
+          command: 'appcenter distribute release -f build/app/outputs/apk/release/app-release.apk --app Roman-Kachmar/android_test_app --group Internal'
