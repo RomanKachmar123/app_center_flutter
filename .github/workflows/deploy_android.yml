@@ -46,4 +46,4 @@ jobs:
         uses: charliealbright/appcenter-cli-action@v1.0.2
         with:
           token: '${{secrets.APPCENTER_API_TOKEN}}'
-          command: 'appcenter distribute release -f build/app/outputs/apk/release/app-release.apk --app Roman-Kachmar/android_test_app --group Internal'
+          command: 'appcenter distribute release -f build/app/outputs/apk/release/app-release.apk --app roman.kachmar-pettersonapps.com/android_test_app --group Internal'
